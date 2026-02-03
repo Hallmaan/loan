@@ -1,0 +1,402 @@
+{
+	"info": {
+		"_postman_id": "loan-service-api-collection",
+		"name": "Loan Service API",
+		"description": "API untuk manajemen siklus hidup pinjaman dengan state machine: proposed → approved → invested → disbursed",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "loan_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Loans",
+			"description": "Endpoint untuk manajemen pinjaman",
+			"item": [
+				{
+					"name": "1. Create Loan",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('loan_id', jsonData.data.id);",
+									"    console.log('Loan ID saved:', jsonData.data.id);",
+									"}",
+									"",
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test('Loan state is proposed', function () {",
+									"    pm.expect(jsonData.data.state).to.eql('proposed');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"borrower_id\": \"borrower-123\",\n    \"principal_amount\": 1000000,\n    \"rate\": 0.15,\n    \"roi\": 0.12\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans"]
+						},
+						"description": "Membuat pinjaman baru. State awal adalah 'proposed'.\n\n**Fields:**\n- `borrower_id`: ID peminjam\n- `principal_amount`: Jumlah pokok pinjaman (dalam sen)\n- `rate`: Suku bunga\n- `roi`: Return on Investment"
+					},
+					"response": []
+				},
+				{
+					"name": "2. List Loans",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Nomor halaman"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Jumlah item per halaman"
+								},
+								{
+									"key": "state",
+									"value": "proposed",
+									"description": "Filter berdasarkan state",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Mendapatkan daftar semua pinjaman dengan pagination dan filter.\n\n**Query Parameters:**\n- `page`: Nomor halaman (default: 1)\n- `limit`: Jumlah per halaman (default: 10)\n- `state`: Filter berdasarkan state (opsional)"
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Loan by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}"]
+						},
+						"description": "Mendapatkan detail pinjaman berdasarkan ID."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Approval",
+			"description": "Endpoint untuk persetujuan pinjaman",
+			"item": [
+				{
+					"name": "4. Approve Loan",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test('Loan state is approved', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.state).to.eql('approved');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "field_validator_id",
+									"value": "validator-456",
+									"description": "ID karyawan validator",
+									"type": "text"
+								},
+								{
+									"key": "picture_proof",
+									"description": "Bukti foto (JPG/PNG)",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}", "approve"]
+						},
+						"description": "Menyetujui pinjaman. Mengubah state dari 'proposed' ke 'approved'.\n\n**Multipart Form Data:**\n- `field_validator_id`: ID karyawan validator\n- `picture_proof`: File bukti foto (wajib)\n\n**Catatan:** Hanya pinjaman dengan state 'proposed' yang bisa disetujui."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Investments",
+			"description": "Endpoint untuk investasi pinjaman",
+			"item": [
+				{
+					"name": "5. Add Investment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"investor_id\": \"investor-789\",\n    \"amount\": 500000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}/investments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}", "investments"]
+						},
+						"description": "Menambahkan investasi ke pinjaman.\n\n**Fields:**\n- `investor_id`: ID investor\n- `amount`: Jumlah investasi\n\n**Catatan:**\n- Hanya pinjaman dengan state 'approved' yang bisa menerima investasi\n- Jumlah investasi tidak boleh melebihi sisa yang dibutuhkan\n- Jika total investasi = principal amount, state otomatis berubah ke 'invested'"
+					},
+					"response": []
+				},
+				{
+					"name": "5b. Add Investment (Full Fund)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Loan state is invested when fully funded', function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.loan) {",
+									"        pm.expect(jsonData.data.loan.state).to.eql('invested');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"investor_id\": \"investor-999\",\n    \"amount\": 500000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}/investments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}", "investments"]
+						},
+						"description": "Investasi kedua untuk melengkapi pendanaan (jika investasi pertama 500.000, ini akan melengkapi menjadi 1.000.000).\n\nSetelah terdanai penuh, state otomatis berubah ke 'invested'."
+					},
+					"response": []
+				},
+				{
+					"name": "6. List Investments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}/investments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}", "investments"]
+						},
+						"description": "Mendapatkan daftar semua investasi untuk pinjaman tertentu."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Disbursement",
+			"description": "Endpoint untuk pencairan pinjaman",
+			"item": [
+				{
+					"name": "7. Disburse Loan",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has success true', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test('Loan state is disbursed', function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.state).to.eql('disbursed');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "field_officer_id",
+									"value": "officer-123",
+									"description": "ID karyawan petugas lapangan",
+									"type": "text"
+								},
+								{
+									"key": "signed_agreement",
+									"description": "Dokumen perjanjian yang ditandatangani (PDF)",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/loans/{{loan_id}}/disburse",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "loans", "{{loan_id}}", "disburse"]
+						},
+						"description": "Mencairkan pinjaman ke peminjam. Mengubah state dari 'invested' ke 'disbursed'.\n\n**Multipart Form Data:**\n- `field_officer_id`: ID karyawan petugas lapangan\n- `signed_agreement`: File perjanjian yang ditandatangani (wajib)\n\n**Catatan:** Hanya pinjaman dengan state 'invested' (sudah terdanai penuh) yang bisa dicairkan."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
